@@ -1,0 +1,23 @@
+{
+  "name": "agriregistree",
+  "version": "1.0.0",
+  "description": "",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "lite-server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KMzuku/AgriRegistree.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/KMzuku/AgriRegistree/issues"
+  },
+  "homepage": "https://github.com/KMzuku/AgriRegistree#readme"
+}
