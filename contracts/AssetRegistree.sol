@@ -36,6 +36,8 @@ contract AssetRegistree {
     mapping (address => bool) public assetCheck;
     // assetID to Asset
     mapping(uint => Asset) public idToAsset;
+    //check if the asset has been verified or not
+    mapping (uint => bool) public assetVerifiedCheck;
 
     
     // Assign contract to the onwer of the asset
@@ -85,6 +87,8 @@ contract AssetRegistree {
       ownerAddressToAsset[_asset_owner] = thisAsset;
       // specific address owns an asset
       assetCheck[_asset_owner] = true;
+      // specifies that the asset is not verified yet
+      assetVerifiedCheck[assetCounter] = false;
       //ID to asset
       idToAsset[assetCounter] = thisAsset;
       //omit and show asset has been registererd
@@ -130,8 +134,8 @@ contract AssetRegistree {
     event AssetVerified(uint indexed _assetID, address _owner);
      
     // Verify Asset by Third Party
-     function verifyAsset(uint _assetID) public {
-        require(ownerAddressToAsset[msg.sender].asset_owner == msg.sender, "user does not own any assets");
+    function verifyAsset(uint _assetID) public {
+        require(ownerAddressToAsset[msg.sender].asset_owner != msg.sender, "Owner cannot verify asset");
         //return the specific asset
          verifiedAssets.push(unverifiedAssets[_assetID]);
          //uint index = unverifiedAssets[_assetID];
@@ -139,6 +143,8 @@ contract AssetRegistree {
          unverifiedAssets[_assetID] = unverifiedAssets[unverifiedAssets.length-1];
          }
          unverifiedAssets.length--; // Implicitly recovers gas from last element storage
+        // specifies that the asset is verified 
+        assetVerifiedCheck[assetCounter] = true;
         emit AssetVerified(_assetID, msg.sender);
      }
      

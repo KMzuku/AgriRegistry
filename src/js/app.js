@@ -21,7 +21,7 @@ App = {
             // or handle the case that the user does not have MetaMask by showing her a message asking her to install Metamask
         }
         // display current account information
-        App.displayAccountInfo();
+       // App.displayAccountInfo();
 
         return App.initContract();
     },
@@ -55,19 +55,38 @@ App = {
         var _asset_owner= $('#asset_owner').val();
         var _asset_name = $('#asset_name').val();
         var _asset_description = $('#asset_description').val();
-        var _asset_date = $('#CurrentDate').val();
+
+        //getting the date
+
+        var today = new Date();
+        var dd = today.getDate();
+        var mm = today.getMonth()+1; //January is 0!
+        var yyyy = today.getFullYear();
+
+        if(dd<10) { 
+            dd = '0'+dd
+        } 
+
+        if(mm<10) {
+            mm = '0'+mm
+        } 
+
+        today = dd + '/' + mm + '/' + yyyy;
+        //check if the date is correct
+        console.log(today);
+
         //check that data has been inputed
         if (_asset_owner.trim() == '') {
             // we cannot create an employer
-            console.log("Insert onwer details ");
+            console.log("Insert owner details ");
             return false;
         };
         App.contracts.AssetRegistree.deployed().then(function(instance) {
             console.log('Adding Asset...');
             instance.registerAsset(_asset_owner, _asset_name, _asset_description,
-                _asset_date, {
+                today, {
                 from: App.account,
-                gas: 500000
+                gas: 5000000
             }); 
         }).catch(function(error) {
             console.log(error);
@@ -81,11 +100,40 @@ App = {
 
         App.contracts.AssetRegistree.deployed().then(function(instance) {
             contractInstance = instance;
-           return contractInstance.assetCheck(AssetOwner);
+           return contractInstance.assetVerifiedCheck(AssetOwner);
             }).then(function(boolean) {
-
-                return boolean});
+                console.log(boolean);
+                //show the button if the asset has not been verified
+                if(boolean == false){
+                    $('.btn-verify').show();
+                } else {
+                    $('.btn-verify').hide();
+                }
+                });
     },
+
+    verifyAsset: function() {
+        var contractInstance;
+
+        //get metaData stored in button 
+        var _assetID = event.target.getAttribute('data-assetID');
+        console.log(_assetID)
+
+        App.contracts.AssetRegistree.deployed().then(function(instance) {
+            console.log('Verifying asset...');
+            instance.verifyAsset(_assetID, {
+                from: App.account,
+                gas: 500000
+            }); 
+        }).catch(function(error) {
+            console.log(error);
+        });
+
+
+    },
+
+
+
 
     reloadAssets: function() {
 
@@ -99,11 +147,18 @@ App = {
             $('#assetsRow').empty();
 
             for (var i = 0; i < allAssets.length; i++) {
+                // get the assetID
                 var asset = allAssets[i];
+                // use the ID to get the full Asset struct
                 contractInstance.idToAsset(asset).then(function(thisAsset) {
-                    App.displayAssets(thisAsset[0], thisAsset[1], thisAsset[2], thisAsset[3]);
+                    //display the struct using the displayAsset function 
+                    App.displayAssets(thisAsset[0],thisAsset[1], thisAsset[2], thisAsset[3], thisAsset[4]);
 
+                    //check whether the asset is verified or not using the 
+                    // checkVerification function
+                    App.checkVerification(thisAsset[0]);
                 });
+                
             }
     
         }).catch(function(err) {
@@ -112,24 +167,30 @@ App = {
         });
     },
 
-    displayAssets: function(owner,assetId,name, description, date) {
+    displayAssets: function(owner,assetID,name, description, date) {
         var assetsRow = $('#assetsRow');
         var assetTemplate = $('#assetTemplate');
         assetTemplate.find('.card-title').text(name);
         assetTemplate.find('.asset-owner').text(owner);
         assetTemplate.find('.asset-date').text(date);
         assetTemplate.find('.asset-description').text(description);
-        //assetTemplate.find('.asset-verified').text(verified);
+        // assetTemplate.find('.asset-verified').text(verified);
         //next two lines of code store metadata of the panel in the button, 
         //so that the data can be accessed when "Adjust Allowed Tokens" btn is clicked
         // assetTemplate.find('.btn-buy').attr('data-employeeID', employeeID);
         // assetTemplate.find('.btn-buy').attr('data-employeeWallet', employeeWallet);
+
+        //next two lines of code store metadata of the panel in the button, 
+        //so that the data can be accessed when "Adjust Allowed Tokens" btn is clicked
+        assetTemplate.find('.btn-verify').attr('data-assetID', assetID);
 
         // add this new employee
         assetsRow.append(assetTemplate.html());
     },
 
     listenToEvents: function() {
+
+        //check for AssetRegistered Events
         App.contracts.AssetRegistree.deployed().then(function(instance) {
             instance.AssetRegistered({}, {
                 fromBlock: 0,
@@ -142,6 +203,21 @@ App = {
                 }
             })
         });
+
+        //check for verified events
+
+        App.contracts.AssetRegistree.deployed().then(function(instance) {
+                instance.AssetVerified({}, {
+                    fromBlock: 0,
+                    toBlock: 'lastest'
+                }).watch(function(error, event) {
+                    if (!error) {
+                        $("#events").append('<li class="list-group-item"> Asset ' + event.args._assetID + ' has just been verified!</li>');
+                    } else {
+                        console.error(error);
+                    }
+                })
+            });
     },
 
      //display account information
