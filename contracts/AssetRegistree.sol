@@ -1,4 +1,4 @@
-pragma solidity ^0.4.23;
+pragma solidity >=0.4.22 <0.6.0;
 
 contract AssetRegistree {
   
@@ -63,9 +63,9 @@ contract AssetRegistree {
     // Anyone can register Asset
     function registerAsset(
       address _asset_owner,
-      string _name,
-      string _description,
-      string _date_of_acquisition) public {
+      string memory _name,
+      string memory _description,
+      string memory _date_of_acquisition) public {
        //incrememnt assetCounter
       assetCounter++;
       //fill asset with information
@@ -166,19 +166,19 @@ contract AssetRegistree {
         return counter;
     }
     
-     function getAllAssets() public view returns (uint[]) {
-       // prepare output array
-       uint[] memory assetIds = new uint[](assetCounter);
+    //  function getAllAssets() public view returns (uint[]) {
+    //   // prepare output array
+    //   uint[] memory assetIds = new uint[](assetCounter);
 
-       uint numberOfAssets = 0;
-       // iterate over articles
-       for(uint i = 1; i <= assetCounter;  i++) {
+    //   uint numberOfAssets = 0;
+    //   // iterate over articles
+    //   for(uint i = 1; i <= assetCounter;  i++) {
 
-         assetIds[numberOfAssets] = idToAsset[i].assetID;
-         numberOfAssets++;
-       }
-       return assetIds;
-     }
+    //      assetIds[numberOfAssets] = idToAsset[i].assetID;
+    //      numberOfAssets++;
+    //   }
+    //   return assetIds;
+    //  }
     
     // struct to store details about collateral
     struct Collateral                  
@@ -199,7 +199,7 @@ contract AssetRegistree {
     mapping(uint => Collateral) public idToCollateral;
 
     //event to verify asset
-    event createCollateral(uint indexed _asset_owner, address indexed _grantor);
+    event collateralCreated(address indexed _asset_owner, address indexed _grantor);
 
     // Use asset as collatoral
     function createCollateral(
@@ -224,13 +224,13 @@ contract AssetRegistree {
       //map id to collateral
       idToCollateral[collateralCounter] = thisCollateral;
       //emit event that the asset has been removed
-      emit collateralCounter(_asset_owner, _grantor);
+      emit collateralCreated(_asset_owner, _grantor);
     }
 
   
     // Remove collateral 
     function removeCollateral(uint _collateralID) public{
-      require(collaterals[idToCollateral[_collateralID].grantor] == msg.sender, "only the grantor can remove collateral" )
+      require(idToCollateral[_collateralID].grantor == msg.sender, "only the grantor can remove collateral" );
       //remove the collateral from the collaterals list
       delete collaterals[idToCollateral[_collateralID].collateralID];
     }
