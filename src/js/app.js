@@ -125,14 +125,14 @@ App = {
                 from: App.account,
                 gas: 500000
             }); 
+        //reload the assets
+        App.reloadAssets();
         }).catch(function(error) {
             console.log(error);
         });
 
 
     },
-
-
 
 
     reloadAssets: function() {
@@ -156,7 +156,7 @@ App = {
 
                     //check whether the asset is verified or not using the 
                     // checkVerification function
-                    App.checkVerification(thisAsset[0]);
+                   App.checkVerification(thisAsset[0]);
                 });
                 
             }

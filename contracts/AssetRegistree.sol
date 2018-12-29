@@ -2,7 +2,6 @@ pragma solidity ^0.4.23;
 
 contract AssetRegistree {
   
-
     // Owner of the asset 
     address owner;        
     
@@ -38,7 +37,8 @@ contract AssetRegistree {
     mapping(uint => Asset) public idToAsset;
     //check if the asset has been verified or not
     mapping (uint => bool) public assetVerifiedCheck;
-
+    //map each asset to a verifier
+    mapping (address => Asset) public verifierToAsset;
     
     // Assign contract to the onwer of the asset
     constructor() public {
@@ -136,6 +136,8 @@ contract AssetRegistree {
     // Verify Asset by Third Party
     function verifyAsset(uint _assetID) public {
         require(ownerAddressToAsset[msg.sender].asset_owner != msg.sender, "Owner cannot verify asset");
+        //store the address of the verifier
+        verifiers.push(msg.sender);
         //return the specific asset
          verifiedAssets.push(unverifiedAssets[_assetID]);
          //uint index = unverifiedAssets[_assetID];
@@ -177,37 +179,61 @@ contract AssetRegistree {
        }
        return assetIds;
      }
-
-
-     // Find Farmer by ID
-    //  function findAssetById(uint _assetID) public returns(address){
-    //   return idToOwnerAddress[_assetID];
-    //  }
     
-    // // Use asset as collatoral
-    // function useAsset() public{
-      
-    // }
-    
-    // // Use asset as collatoral
-    // function useAsset() public{
+    // struct to store details about collateral
+    struct Collateral                  
+    {
+        uint collateralID;
+        uint assetID;
+        address asset_owner;     
+        address grantor;           
+        address verifier;        
+    }
+    //CollateralCounter
+    uint public collateralCounter = 0;
+    //an array of collateral
+    Collateral[] public collaterals;
+    //map each collateral to address
+    mapping (uint => address) public collateralIDTOwnerAddress;
+    // map ID to collateral
+    mapping(uint => Collateral) public idToCollateral;
 
-    // }
-    
-    // // Owner of asset verify collateral 
-    // function verifyCollateral() public{
+    //event to verify asset
+    event createCollateral(uint indexed _asset_owner, address indexed _grantor);
 
-    // }
-    
-    // // Release collateral from contract
-    // function releaseCollateral() public{
+    // Use asset as collatoral
+    function createCollateral(
+      uint _assetID,
+      address _asset_owner, 
+      address _grantor,
+      address _verifier) public {
+      require(msg.sender == _grantor, "Only the fund provider can create collateral");
+      //increase counter
+      collateralCounter++;
+      //store the new data into the struct collateral
+      Collateral memory thisCollateral = Collateral(
+       collateralCounter,
+       _assetID,
+        _asset_owner, 
+        _grantor,
+        _verifier);
+      //push new collateral into array
+      collaterals.push(thisCollateral);
+      //map the collateral id to the owner address
+      collateralIDTOwnerAddress[collateralCounter] = _asset_owner;
+      //map id to collateral
+      idToCollateral[collateralCounter] = thisCollateral;
+      //emit event that the asset has been removed
+      emit collateralCounter(_asset_owner, _grantor);
+    }
 
-    // }
-    
-    // // Remove collateral 
-    // function removeCollateral() public{
-
-    // }
+  
+    // Remove collateral 
+    function removeCollateral(uint _collateralID) public{
+      require(collaterals[idToCollateral[_collateralID].grantor] == msg.sender, "only the grantor can remove collateral" )
+      //remove the collateral from the collaterals list
+      delete collaterals[idToCollateral[_collateralID].collateralID];
+    }
     
 
 }
