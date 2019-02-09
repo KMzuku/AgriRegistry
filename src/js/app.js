@@ -107,7 +107,7 @@ App = {
                 if(boolean == false){
                     $('.btn-verify').show();
                 } else {
-                    $('.btn-verify').hide();
+                    $('.btn-verify').show();
                 }
                 });
     },
@@ -123,7 +123,7 @@ App = {
             console.log('Verifying asset...');
             instance.verifyAsset(_assetID, {
                 from: App.account,
-                gas: 500000
+                gas: 5000000
             }); 
         //reload the assets
         App.reloadAssets();
