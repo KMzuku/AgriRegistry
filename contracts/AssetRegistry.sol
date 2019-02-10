@@ -5,25 +5,41 @@ contract AssetRegistry {
     // Owner of the asset
     address owner;
 
-    // Person who verifies the asset
+    // Person who has the ability to verify an asset
     address verifier;
+    // A list of verfiers
     address[] public verifiers;
 
-    // Fund users
+    // A financial provider
     address grantor;
+    // A list of financial providers
     address[] public grantors;
 
-    // Asset Description
+    // A struct containing information-
+    // about the asset which will be used as collateral
     struct Asset {
+      // The Owner of the asset
       address asset_owner;
+      // A unique identifier of the asset
       uint assetID;
-      string name;   // name of asset
-      string description; // asset description
-      string date_of_acquisition; // when the asset was bought
+      // The name which will be displayed on the
+      // asset registry platform
+      string name;
+      // The description of the asset
+      // The description needs to describe in-
+      // detail what the asset looks like and its current-
+      // condition.
+      string description;
+      // when the asset was bought or -
+      // when the individual became the owenr of the asset
+      string date_of_acquisition;
     }
-    // array of assets
+    // Array of assets
     Asset[] public assets;
+    // Array of assets that have been verified-
+    // by a trusted party
     Asset[] public verifiedAssets;
+    // Array if assets which have NOT been verified
     Asset[] public unverifiedAssets;
 
 
@@ -31,13 +47,13 @@ contract AssetRegistry {
     mapping(address => Asset) public ownerAddressToAsset;
     // Assign assetCounter to owner
     mapping (uint => address) public idToOwnerAddress;
-    //check if asset exists for a specific owner
+    // To check if asset exists for a specific owner
     mapping (address => bool) public assetCheck;
-    // assetID to Asset
+    // AssetID to Asset
     mapping(uint => Asset) public idToAsset;
-    //check if the asset has been verified or not
+    // To check if the asset has been verified or not
     mapping (uint => bool) public assetVerifiedCheck;
-    //map each asset to a verifier
+    // To map each asset to a verifier
     mapping (address => Asset) public verifierToAsset;
 
     // Assign contract to the onwer of the asset
@@ -48,7 +64,8 @@ contract AssetRegistry {
 
     // Permissions
      modifier onlyOwner() {
-         require(msg.sender == owner, "Only the owner of the asset can perform this function");
+         require(msg.sender == owner,
+           "Only the owner of the asset can perform this function");
          _;
     }
 
@@ -57,8 +74,10 @@ contract AssetRegistry {
 
     //register Asset event
 
-    event AssetRegistered(address indexed _asset_owner, address _registerar,
-                          string _name, string _date_of_acquisition);
+    event AssetRegistered(address indexed _asset_owner,
+                          address _registerar,
+                          string _name,
+                          string _date_of_acquisition);
 
     // Anyone can register Asset
     function registerAsset(
@@ -66,17 +85,28 @@ contract AssetRegistry {
       string memory _name,
       string memory _description,
       string memory _date_of_acquisition) public {
-       //incrememnt assetCounter
+        // check whether the sender of the transaction
+        // is the creator of the contract
+      require(
+        msg.sender == owner,
+        "This address is not authorized."
+        );
+       // Incrememnt assetCounter
       assetCounter++;
-      //fill asset with information
 
+      //fill asset with information
       Asset memory thisAsset = Asset(
-        _asset_owner,
-        assetCounter,
-        _name,
-        _description,
-        _date_of_acquisition);
-      //uint assetID = assets.push(Asset(owner, _name, _description, _date_of_acquisition,false));
+          _asset_owner,
+          assetCounter,
+          _name,
+          _description,
+          _date_of_acquisition);
+
+      // Checks if the asset already exists
+      require(
+          thisAsset.assetCounter != assets[thisAsset],
+          "Asset already exists."
+          );
       // Push asset to all assets
       assets.push(thisAsset);
       // Push asset to unverified list
@@ -92,16 +122,15 @@ contract AssetRegistry {
       //ID to asset
       idToAsset[assetCounter] = thisAsset;
       //omit and show asset has been registererd
-      emit AssetRegistered(_asset_owner, msg.sender, _name, _date_of_acquisition);
+      emit AssetRegistered(_asset_owner, msg.sender,
+        _name, _date_of_acquisition);
 
     }
 
-    //get number of assets registered in the whole platform
+    // Get number of assets registered in the whole platform
     function getAssetsRegistered() external view returns(uint) {
-        //require there to be songs
+        //require there to be assets
         require(assets.length > 0 , "no assets registered");
-        //get number of songs registered
-
         //create a counter
         uint counter = 0;
         // for each asset in the asset array
@@ -115,10 +144,8 @@ contract AssetRegistry {
 
     //get number of assets registered in the whole platform
     function getUnverifiedAssets() external view returns(uint) {
-        //require there to be songs
+        //require there to be unverified assets
         require(unverifiedAssets.length  > 0, "no assets unverified");
-        //get number of songs registered
-
         //create a counter
         uint counter = 0;
         // for each asset in the asset array
@@ -135,26 +162,29 @@ contract AssetRegistry {
 
     // Verify Asset by Third Party
     function verifyAsset(uint _assetID) public {
-        require(ownerAddressToAsset[msg.sender].asset_owner != msg.sender, "Owner cannot verify asset");
-        //store the address of the verifier
+        require(ownerAddressToAsset[msg.sender].asset_owner != msg.sender,
+          "Owner cannot verify asset");
+        // store the address of the verifier
         verifiers.push(msg.sender);
-        //return the specific asset
+        // return the specific asset
          verifiedAssets.push(unverifiedAssets[_assetID]);
-         //uint index = unverifiedAssets[_assetID];
+         // uint index = unverifiedAssets[_assetID];
          if (unverifiedAssets.length > 1) {
-         unverifiedAssets[_assetID] = unverifiedAssets[unverifiedAssets.length-1];
+         unverifiedAssets[_assetID] =
+         unverifiedAssets[unverifiedAssets.length-1];
          }
-         unverifiedAssets.length--; // Implicitly recovers gas from last element storage
+         // Implicitly recovers gas from last element storage
+         unverifiedAssets.length--;
         // specifies that the asset is verified
         assetVerifiedCheck[assetCounter] = true;
+        // notifies user of verification
         emit AssetVerified(_assetID, msg.sender);
      }
 
      //get number of assets registered in the whole platform
     function getVerifiedAssets() external view returns(uint) {
-        //require there to be songs
+        //require there to be verified assets
         require(verifiedAssets.length > 0, "no assets verified");
-
         //create a counter
         uint counter = 0;
         // for each asset in the asset array
@@ -166,40 +196,50 @@ contract AssetRegistry {
         return counter;
     }
 
+    // Get all assets
      function getAllAssets() public view returns (uint[]) {
       // prepare output array
       uint[] memory assetIds = new uint[](assetCounter);
-
       uint numberOfAssets = 0;
       // iterate over articles
       for(uint i = 1; i <= assetCounter;  i++) {
-
          assetIds[numberOfAssets] = idToAsset[i].assetID;
          numberOfAssets++;
       }
+      //return all asset IDs
       return assetIds;
      }
 
-    // struct to store details about collateral
+    // Struct to store details about collateral
     struct Collateral
     {
+        // A unique identifier of the collateral
         uint collateralID;
+        // the asset ID created in the
+        // asset registration
         uint assetID;
+        // the owner of the asset
         address asset_owner;
+        // the financial provider who has
+        // agreed to accept the asset
+        // as collateral
         address grantor;
+        // the trusted party who has verified
+        // the asset
         address verifier;
     }
-    //CollateralCounter
+    // CollateralCounter
     uint public collateralCounter = 0;
-    //an array of collateral
+    // an array of collateral
     Collateral[] public collaterals;
-    //map each collateral to address
+    // Map each collateral to address
     mapping (uint => address) public collateralIDTOwnerAddress;
-    // map ID to collateral
+    // Map ID to collateral
     mapping(uint => Collateral) public idToCollateral;
 
-    //event to verify asset
-    event collateralCreated(address indexed _asset_owner, address indexed _grantor);
+    // Event to verify asset
+    event collateralCreated(address indexed _asset_owner,
+      address indexed _grantor);
 
     // Use asset as collatoral
     function createCollateral(
@@ -207,7 +247,8 @@ contract AssetRegistry {
       address _asset_owner,
       address _grantor,
       address _verifier) public {
-      require(msg.sender == _grantor, "Only the fund provider can create collateral");
+      require(msg.sender == _grantor,
+        "Only the fund provider can create collateral");
       //increase counter
       collateralCounter++;
       //store the new data into the struct collateral
@@ -217,22 +258,32 @@ contract AssetRegistry {
         _asset_owner,
         _grantor,
         _verifier);
+      // Checks if the asset already exists
+      require(
+            thisCollateral.collateralCounter != collaterals[thisCollateral],
+            "Collateral already exists!"
+            );
       //push new collateral into array
       collaterals.push(thisCollateral);
       //map the collateral id to the owner address
       collateralIDTOwnerAddress[collateralCounter] = _asset_owner;
       //map id to collateral
       idToCollateral[collateralCounter] = thisCollateral;
-      //emit event that the asset has been removed
+      //emit event that the asset has been created
       emit collateralCreated(_asset_owner, _grantor);
     }
 
-
+    // Event to show the collateral has been removed
+    event collateralRemoved(uint indexed collateralID_,
+      address indexed _grantor);
     // Remove collateral
     function removeCollateral(uint _collateralID) public{
-      require(idToCollateral[_collateralID].grantor == msg.sender, "only the grantor can remove collateral" );
+      require(idToCollateral[_collateralID].grantor == msg.sender,
+        "only the grantor can remove collateral" );
       //remove the collateral from the collaterals list
       delete collaterals[idToCollateral[_collateralID].collateralID];
+      //emit event that the asset has been created
+      emit collateralRemoved(_collateralID, msg.sender);
     }
 
 
