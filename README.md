@@ -1,4 +1,4 @@
-# AgriRegistree
+# AgriRegistry
 
 The following github project was created as part of the MPhil FinTech Minor Dissertation.
 
